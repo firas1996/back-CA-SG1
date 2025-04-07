@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     require: [true, "The Email is required !!!"],
-    unique: [true, "The email already used !!"],
+    unique: true,
     lowercase: true,
     validate: [validator.isEmail, "You must set a valid email !!!"],
   },
@@ -17,6 +17,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     require: [true, "The Password is required !!!"],
     minlength: 8,
+  },
+  role: {
+    type: String,
+    enum: ["admin", "user"],
+    default: "user",
   },
   confirmPassword: {
     type: String,
