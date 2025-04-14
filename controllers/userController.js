@@ -1,5 +1,68 @@
 const User = require("../model/userModel");
-// aaaaa
+const jwt = require("jsonwebtoken");
+
+const createToken = (id, name) => {
+  return jwt.sign({ id, name, test: "abc" }, process.env.JWT_SECRET, {
+    expiresIn: "15d",
+  });
+};
+
+exports.signup = async (req, res) => {
+  try {
+    // const newUser = await User.create({
+    //   name: req.body.name,
+    //   email: req.body.email,
+    //   password: req.body.password,
+    //   confirmPassword: req.body.confirmPassword,
+    // });
+    const newUser = await User.create({ ...req.body, role: "user" });
+    res.status(201).json({
+      message: "User Created !!!",
+      data: newUser,
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: "Fail !!!",
+      error: error,
+    });
+  }
+};
+
+exports.signin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      res.status(404).json({
+        message: "email or pass not Found !!!",
+        error: error,
+      });
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(404).json({
+        message: "no such user found !!!",
+        error: error,
+      });
+    }
+    if (!(await user.verifyPass(password, user.password))) {
+      console.log(password);
+      res.status(404).json({
+        message: "incorrect pass !!!",
+        error: error,
+      });
+    }
+    const token = createToken(user._id, user.name);
+    res.status(201).json({
+      message: "Login !!!",
+      token: token,
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: "Fail !!!",
+      error: error,
+    });
+  }
+};
 exports.createUser = async (req, res) => {
   try {
     const newUser = await User.create(req.body);
