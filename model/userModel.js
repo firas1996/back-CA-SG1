@@ -57,6 +57,12 @@ userSchema.methods.verifyPass = async function (userPass, cPass) {
   return await bcryptjs.compare(userPass, cPass);
 };
 
+userSchema.methods.verifyValidDate = function (iat) {
+  console.log(iat);
+  console.log(parseInt(this.password_updated_at.getTime() / 1000));
+  return iat < parseInt(this.password_updated_at.getTime() / 1000);
+};
+
 const User = mongoose.model("User", userSchema);
 
 module.exports = User;

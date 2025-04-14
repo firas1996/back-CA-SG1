@@ -1,5 +1,6 @@
 const User = require("../model/userModel");
 const jwt = require("jsonwebtoken");
+const { promisify } = require("util");
 
 const createToken = (id, name) => {
   return jwt.sign({ id, name, test: "abc" }, process.env.JWT_SECRET, {
@@ -131,6 +132,53 @@ exports.deleteUser = async (req, res) => {
     res.status(204).json({
       message: "User Deleted !!!",
     });
+  } catch (error) {
+    res.status(400).json({
+      message: "Fail !!!",
+      error: error,
+    });
+  }
+};
+
+exports.protectorMW = async (req, res, next) => {
+  try {
+    let token;
+    // 1) bech nthabat ken el user 3ando token wala lé
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+    if (!token) {
+      res.status(401).json({
+        message: "You are not logged in !!!",
+        error: error,
+      });
+    }
+    // 2) bech nthabat ken el token ala 3and el user valid or not
+    const validToken = await promisify(jwt.verify)(
+      token,
+      process.env.JWT_SECRET
+    );
+    // 3) bech nthabat ken el user moula el token mizel mawjoud or not
+    const user = await User.findById(validToken.id);
+    if (!user) {
+      res.status(401).json({
+        message: "Token no longer valid !!!",
+        error: error,
+      });
+    }
+    // 4) bech nthabat ken el token tsan3et 9bal el update mta3 el pass
+
+    if (user.verifyValidDate(validToken.iat)) {
+      res.status(401).json({
+        message: "Token no longer valid !!!",
+        error: error,
+      });
+    }
+    req.role = user.role;
+    next();
   } catch (error) {
     res.status(400).json({
       message: "Fail !!!",
